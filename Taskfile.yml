@@ -1,0 +1,26 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+tasks:
+  up:
+    desc: "Starts up the docker compose, downloads models, and opens the browser"
+    cmds:
+      - docker compose up -d
+      - task: download:models
+      - task: open
+  
+  open:
+    desc: "Finds the chat-ui and opens a browser pointed at the correct port. If multiple exist it uses the first one"
+    cmds:
+      - |
+        port=$(docker compose port chat-ui 3000 | sed 's/0.0.0.0/localhost/')
+        open http://${port}
+  
+  download:models:
+    desc: "Run this once you start the docker compose to download the various models."
+    cmds:
+      - docker compose exec ollama ollama pull all-minilm
+      - docker compose exec ollama ollama pull tinyllama
+      - docker compose exec ollama ollama pull mistral

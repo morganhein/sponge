@@ -1,0 +1,40 @@
+name: local-llm
+
+services:
+  postgresdb:
+    image: timescale/timescaledb-ha:pg17
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432"
+    volumes:
+      - pg_data:/homedb/postgres/pgdata/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    command: [ "-c", "ai.ollama_host=http://ollama:11434" ]
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017"
+  vectorizer-worker:
+    image: timescale/pgai-vectorizer-worker:latest
+    environment:
+      PGAI_VECTORIZER_WORKER_DB_URL: postgres://postgres:postgres@postgresdb:5432/postgres
+      OLLAMA_HOST: http://ollama:11434
+    command: [ "--poll-interval", "5s", "--log-level", "DEBUG" ]
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434"
+    volumes:
+      - "model_data:/root/.ollama/models"
+  chat-ui:
+    image: ghcr.io/huggingface/chat-ui
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017
+    volumes:
+      - .env.local:/app/.env.local
+    ports:
+      - "3000"
+volumes:
+  pg_data:
+  model_data:
