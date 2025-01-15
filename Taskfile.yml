@@ -10,6 +10,16 @@ tasks:
       - docker compose up -d
       - task: download:models
       - task: open
+
+  down:
+    desc: "Stops the services"
+    cmds:
+      - docker compose down
+
+  down:clean:
+    desc: "Stops services and removes all caches"
+    cmds:
+      - docker compose down -v
   
   open:
     desc: "Finds the chat-ui and opens a browser pointed at the correct port. If multiple exist it uses the first one"
@@ -24,3 +34,11 @@ tasks:
       - docker compose exec ollama ollama pull all-minilm
       - docker compose exec ollama ollama pull tinyllama
       - docker compose exec ollama ollama pull mistral
+
+  hydrate:wiki:
+    desc: "Hydrates the database using the huggingface wiki example data set"
+    cmds:
+      - |
+        port=$(docker compose port postgresdb 5432 | sed 's/0.0.0.0://')
+        echo "Connecting to psql via localhost on port ${port}"
+        PGPASSWORD=postgres psql -h localhost -U postgres -p ${port} -d postgres -f hydrate.sql
